@@ -1,0 +1,24 @@
+.DS_Store
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+local_tools/
+build/
+
+# Editor directories and files
+# Editor directories and files
+/.idea/workspace.xml
+/.idea/webServers.xml
+/.idea/deployment.xml
+/.idea/jsLibraryMappings.xml
+/.idea/mongoSettings.xml
+/.idea/shelf
+/.idea/libraries
+/.idea/*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.vscode/

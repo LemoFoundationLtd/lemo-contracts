@@ -1,0 +1,22 @@
+{
+    "name": "lemo_contract",
+    "version": "1.0.0",
+    "description": "Smart Contract",
+    "author": "Lnk",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "dev": "truffle develop",
+        "test": "truffle test",
+        "test-lemocoin": "truffle test ./test/LemoCoin.js"
+    },
+    "dependencies": {
+        "ethjs-abi": "^0.2.1"
+    },
+    "devDependencies": {},
+    "repository": {
+        "type": "git",
+        "url": "git@git.coding.net:lingyue/lemo_contract.git"
+    }
+}
