@@ -202,6 +202,22 @@ contract('LemoSale_success', function(accounts) {
         const promise = saleInstance.finalize()
         await testHelper.assertReject(promise, 'finalize can be run only once')
     })
+
+    it('owner.destroy() during lock time', async () => {
+        const promise = saleInstance.destroy()
+        await testHelper.assertReject(promise, 'Should reject destroy cause the storage will lock for 3 months after ICO end')
+    })
+
+    it('owner.destroy()', async () => {
+        const lockTime = 3600 * 24 * 30 * 3
+        await saleInstance.initialize(saleConfig.START_TIME - lockTime - 100, saleConfig.START_TIME - lockTime - 99, saleConfig.MIN_FINNEY)
+        console.log('    /********** Unlock ICO destroy **********/')
+
+        await saleInstance.destroy()
+
+        const promise = saleInstance.destroy()
+        await testHelper.assertReject(promise, 'Should reject destroy cause the contract has gone', testHelper.CONTRACT_HAS_GONE)
+    })
 })
 
 /**
