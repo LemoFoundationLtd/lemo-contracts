@@ -141,6 +141,15 @@ contract LemoSale is DSAuth, DSMath {
         tokenContributionCap = _tokenContributionCap;
     }
 
+    // Only for test
+    function restore(uint256 min, uint256 max) public auth {
+        tokenContributionMin = min;
+        tokenContributionCap = max;
+        funding = true;
+        soldAmount = 0;
+        contributionCount = 0;
+    }
+
     function initialize(uint256 _startTime, uint256 _endTime, uint256 _minPaymentFinney) public auth {
         require(_startTime < _endTime);
         require(_minPaymentFinney > 0);
