@@ -189,12 +189,12 @@ contract('LemoCoin', function(accounts) {
     it('owner.transferAndFreezing(accounts[2], 10, 10, future, 0); accounts[2].transfer(owner, 10)', async () => {
         const targetAccount = accounts[2]
         const expireTime = nowSeconds() + 3600
-        const soonerExpireTime = nowSeconds() + 3
+        const soonerExpireTime = nowSeconds() + 4
         const amount = 10
         const freezeAmount = 10
         const freezingType = 0
 
-        // The first balance in the queue will be unfreesed in 3 seconds
+        // The first balance in the queue will be unfreesed in 4 seconds
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, soonerExpireTime, freezingType)
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, expireTime, freezingType)
         await testHelper.promiseTimeout(2 * 1000)
@@ -206,14 +206,14 @@ contract('LemoCoin', function(accounts) {
     it('owner.transferAndFreezing(accounts[3], 10, 10, future, 0); balanceOf(accounts[3]); validBalanceOf(accounts[3])', async () => {
         const targetAccount = accounts[3]
         const expireTime = nowSeconds() + 3600
-        const soonerExpireTime = nowSeconds() + 3
+        const soonerExpireTime = nowSeconds() + 4
         const amount = 10
         const freezeAmount = 10
         const freezingType = 0
 
         let starting_balance = await instance.balanceOf(targetAccount)
         let starting_valid_balance = await instance.validBalanceOf(targetAccount)
-        // The last balance in the queue will be unfreesed in 3 seconds
+        // The last balance in the queue will be unfreesed in 4 seconds
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, expireTime, freezingType)
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, soonerExpireTime, freezingType)
         await testHelper.promiseTimeout(2 * 1000)
@@ -230,12 +230,12 @@ contract('LemoCoin', function(accounts) {
         const targetAccount = accounts[4]
         const expireTime1 = nowSeconds() + 3600
         const expireTime2 = nowSeconds() + 1800
-        const soonerExpireTime = nowSeconds() + 4
+        const soonerExpireTime = nowSeconds() + 5
         const amount = 10
         const freezeAmount = 10
         const freezingType = 0
 
-        // The last balance in the queue will be unfreesed in 4 seconds
+        // The last balance in the queue will be unfreesed in 5 seconds
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, soonerExpireTime, freezingType)
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, expireTime1, freezingType)
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, expireTime2, freezingType)
