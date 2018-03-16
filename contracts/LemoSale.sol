@@ -208,6 +208,12 @@ contract LemoSale is DSAuth, DSMath {
         owner.transfer(this.balance);
     }
 
+    function destroy() public auth {
+        require(block.timestamp >= endTime + 3600 * 24 * 30 * 3);
+
+        selfdestruct(owner);
+    }
+
     function refund() public {
         require(funding);
         require(block.timestamp >= endTime && soldAmount <= tokenContributionMin);

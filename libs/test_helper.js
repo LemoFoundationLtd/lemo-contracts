@@ -1,35 +1,38 @@
 const abi = require('ethjs-abi')
 
-// 不存在的用户
 const invalidUser = '0x0000000000000000000000000000000000000000'
 const DEFAULT_TRANSACTION_ERROR_MSG = 'VM Exception while processing transaction: revert'
 const ASSERT_ERROR_MSG = 'VM Exception while processing transaction: invalid opcode'
 const NOT_ENOUGH_ETH_ERROR_MSG = 'sender doesn\'t have enough funds to send tx'
-// gas单价1 gwei
+const CONTRACT_HAS_GONE = 'is not a contract address'
+// 1 gwei
 const GAS_PRICE = 1000000000
 
 /**
- * 判断运行时是否会报指定错误
+ * Try and expect a certain exception
  * @param {Function} promise
  * @param {string} wording
- * @param {string?} exceptedErrorMsg 期望的错误wording，默认为合约assert错误
+ * @param {string?} expectedErrorMsg expect assert failing by default
  * @return {Promise}
  */
-async function assertReject(promise, wording, exceptedErrorMsg) {
+async function assertReject(promise, wording, expectedErrorMsg) {
     try {
         await promise
     } catch (e) {
-        assert.equal(e.message, exceptedErrorMsg || DEFAULT_TRANSACTION_ERROR_MSG)
+        if (expectedErrorMsg) {
+            assert.equal(e.message.includes(expectedErrorMsg), true)
+        } else {
+            assert.equal(e.message, expectedErrorMsg || DEFAULT_TRANSACTION_ERROR_MSG)
+        }
         return
     }
     throw new Error(wording)
 }
 
 /**
- * 账户间的ETH转账
- * @param {string} fromAccount 发送方
- * @param {string} toAccount 接收方
- * @param {number} finney 金额
+ * @param {string} fromAccount
+ * @param {string} toAccount
+ * @param {number} finney amount
  * @return {Promise}
  */
 async function transferETH(fromAccount, toAccount, finney) {
@@ -53,12 +56,12 @@ async function transferETH(fromAccount, toAccount, finney) {
 }
 
 /**
- * 用来测试不正常调用ETH转账的方法
- * @param {string} fromAccount 发送方
- * @param {string} toAccount 接收方
- * @param {number} finney 金额
- * @param {string} exceptErrMsg 应该抛出这个异常才对
- * @param {string} msgIfNoError 如果没有抛异常，就抛这个异常
+ * Send an wrong transaction and catch the exception
+ * @param {string} fromAccount
+ * @param {string} toAccount
+ * @param {number} finney amount
+ * @param {string} exceptErrMsg should throw exception with this message
+ * @param {string} msgIfNoError reject this error if haven't caught the exception we expected
  * @return {Promise}
  */
 async function transferETHAndCatch(fromAccount, toAccount, finney, exceptErrMsg, msgIfNoError) {
@@ -81,25 +84,25 @@ async function transferETHAndCatch(fromAccount, toAccount, finney, exceptErrMsg,
 }
 
 /**
- * 获取调用合约时参数的ABI编码
- * @param {object} instance 合约实例
- * @param {string?} methodName 要调用的合约方法名。如果不填则是普通的ETH转账
- * @param {Array?} params 合约方法的参数
+ * Encode the function parameters by ABI format
+ * @param {object} instance contract instance
+ * @param {string?} methodName It means traditional transfer of ETH without this parameter
+ * @param {Array?} params The parameters of contract function
  * @return {Promise}
  */
 async function encodeABIParams(instance, methodName, ...params) {
     const methodInfo = instance.abi.find(item => item.name === methodName)
     if (!methodInfo) {
-        console.error('ABI文件中没有找到该函数', methodName)
+        console.error(`No such method [${methodName}] in ABI`)
         return ''
     }
     return abi.encodeMethod(methodInfo, params)
 }
 
 /**
- * 获取交易消耗的gas费用
- * @param {string} txHash 交易hash
- * @return {number} 以wei为单位的交易费用
+ * Get the gas used by a transaction
+ * @param {string} txHash transaction hash
+ * @return {number} fee in wei
  */
 function getGasWei(txHash) {
     const transaction = web3.eth.getTransaction(txHash);
@@ -108,7 +111,7 @@ function getGasWei(txHash) {
 }
 
 /**
- * 将事件包装为Promise
+ * Create a Promise to watch event
  * @param instance
  * @param {string} eventName
  * @return {Promise}
@@ -137,7 +140,6 @@ function promisifyEvent(instance, eventName) {
 }
 
 /**
- * 将setTimeout函数封装为promise
  * @param {number} timeout
  * @return {Promise}
  */
@@ -150,9 +152,9 @@ function promiseTimeout(timeout) {
 const observerMap = new Map()
 
 /**
- * 开始监听LogNote日志
+ * Start watching LogNote event
  * @param instance
- * @param {string=allEvents} eventName 事件名。不填则捕获所有事件
+ * @param {string=allEvents} eventName Show all events if no this parameter
  */
 function logOn(instance, eventName = 'allEvents') {
     const observer = instance[eventName]()
@@ -163,7 +165,7 @@ function logOn(instance, eventName = 'allEvents') {
 }
 
 /**
- * 格式化LogNote事件
+ * Format LogNote event info
  * @param event
  * @return {string}
  */
@@ -173,8 +175,8 @@ function formatLogNote(event) {
 }
 
 /**
- * 停止监听LogNote日志
- * @param {string=allEvents} eventName 事件名。不填则捕获所有事件
+ * Stop watching LogNote event
+ * @param {string=allEvents} eventName Show all events if no this parameter
  */
 function logOff(eventName = 'allEvents') {
     const observer = observerMap.get(eventName)
@@ -189,6 +191,7 @@ module.exports = {
     DEFAULT_TRANSACTION_ERROR_MSG,
     ASSERT_ERROR_MSG,
     NOT_ENOUGH_ETH_ERROR_MSG,
+    CONTRACT_HAS_GONE,
     GAS_PRICE,
     assertReject,
     transferETH,
