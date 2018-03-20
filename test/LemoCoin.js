@@ -65,6 +65,14 @@ contract('LemoCoin', function(accounts) {
         assert.equal(balance.toNumber(), 0)
     })
 
+    it('transfer(short address)', async () => {
+        // Test the short address bug. https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
+        // const data = await testHelper.encodeABIParams(instance, 'transfer', accounts[4], 1000)
+        const transferData = '0xa9059cbb0000000000000000000000000d1d4e623d10f9fba5db95830f7d3839406c6af00000000000000000000000000000000000000000000000000000000000003e8'
+
+        await testHelper.transferETHAndCatch(owner, instance.address, 0, testHelper.ASSERT_ERROR_MSG, 'Should reject transfer cause target address is invalid', transferData)
+    })
+
     it('owner.addFreezer(freezer); owner.addFreezer(normalUser); owner.removeFreezer(normalUser)', async () => {
         await instance.addFreezer(freezer, {from: owner})
         await instance.addFreezer(normalUser, {from: owner})
