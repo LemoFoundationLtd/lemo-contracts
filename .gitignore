@@ -8,15 +8,7 @@ local_tools/
 build/
 
 # Editor directories and files
-# Editor directories and files
-/.idea/workspace.xml
-/.idea/webServers.xml
-/.idea/deployment.xml
-/.idea/jsLibraryMappings.xml
-/.idea/mongoSettings.xml
-/.idea/shelf
-/.idea/libraries
-/.idea/*.iml
+/.idea
 *.suo
 *.ntvs*
 *.njsproj
