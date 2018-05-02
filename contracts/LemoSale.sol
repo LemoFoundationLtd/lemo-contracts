@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 contract DSAuthority {
     function canCall(
@@ -15,9 +15,9 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() public {
+    constructor() public {
         owner = msg.sender;
-        LogSetOwner(msg.sender);
+        emit LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
@@ -25,7 +25,7 @@ contract DSAuth is DSAuthEvents {
     auth
     {
         owner = owner_;
-        LogSetOwner(owner);
+        emit LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
@@ -33,7 +33,7 @@ contract DSAuth is DSAuthEvents {
     auth
     {
         authority = authority_;
-        LogSetAuthority(authority);
+        emit LogSetAuthority(authority);
     }
 
     modifier auth {
@@ -130,7 +130,7 @@ contract LemoSale is DSAuth, DSMath {
         _;
     }
 
-    function LemoSale(uint256 _tokenContributionMin, uint256 _tokenContributionCap, uint256 _finney2LemoRate) public {
+    constructor(uint256 _tokenContributionMin, uint256 _tokenContributionCap, uint256 _finney2LemoRate) public {
         require(_finney2LemoRate > 0);
         require(_tokenContributionMin > 0);
         require(_tokenContributionCap > 0);
@@ -182,10 +182,10 @@ contract LemoSale is DSAuth, DSMath {
         }
 
         token.transferFrom(owner, msg.sender, reward);
-        Contribution(msg.sender, msg.value, reward);
+        emit Contribution(msg.sender, msg.value, reward);
         contributionCount++;
         if (refundEth > 0) {
-            Refund(msg.sender, refundEth);
+            emit Refund(msg.sender, refundEth);
             msg.sender.transfer(refundEth);
         }
     }
@@ -196,16 +196,16 @@ contract LemoSale is DSAuth, DSMath {
         require(soldAmount >= tokenContributionMin);
 
         funding = false;
-        Finalized(block.timestamp);
-        owner.transfer(this.balance);
+        emit Finalized(block.timestamp);
+        owner.transfer(address(this).balance);
     }
 
     // Withdraw in 3 month after failed. So funds not locked in contract forever
     function withdraw() public auth {
-        require(this.balance > 0);
+        require(address(this).balance > 0);
         require(block.timestamp >= endTime + 3600 * 24 * 30 * 3);
 
-        owner.transfer(this.balance);
+        owner.transfer(address(this).balance);
     }
 
     function destroy() public auth {
@@ -226,7 +226,7 @@ contract LemoSale is DSAuth, DSMath {
         soldAmount = sub(soldAmount, tokenAmount);
 
         uint256 refundEth = tokenAmount / finney2LemoRate * 1 finney;
-        Refund(msg.sender, refundEth);
+        emit Refund(msg.sender, refundEth);
         msg.sender.transfer(refundEth);
     }
 }

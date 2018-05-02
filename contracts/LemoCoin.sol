@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 contract DSAuthority {
     function canCall(
@@ -15,9 +15,9 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() public {
+    constructor() public {
         owner = msg.sender;
-        LogSetOwner(msg.sender);
+        emit LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
@@ -25,7 +25,7 @@ contract DSAuth is DSAuthEvents {
     auth
     {
         owner = owner_;
-        LogSetOwner(owner);
+        emit LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
@@ -33,7 +33,7 @@ contract DSAuth is DSAuthEvents {
     auth
     {
         authority = authority_;
-        LogSetAuthority(authority);
+        emit LogSetAuthority(authority);
     }
 
     modifier auth {
@@ -72,13 +72,12 @@ contract DSNote {
             bar := calldataload(36)
         }
 
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
 
         _;
     }
 }
 contract DSStop is DSNote, DSAuth {
-
     bool public stopped;
 
     modifier stoppable {
@@ -143,34 +142,26 @@ contract ERC20 {
 
 
 contract Coin is ERC20, DSStop {
-    string internal c_name;
-    string internal c_symbol;
-    uint8 internal c_decimals = 0;
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
     uint256 internal c_totalSupply;
     mapping(address => uint256) internal c_balances;
     mapping(address => mapping(address => uint256)) internal c_approvals;
 
-    function init(uint256 total_lemos, string token_name, string token_symbol) internal {
-        c_balances[msg.sender] = total_lemos;
-        c_totalSupply = total_lemos;
-        c_name = token_name;
-        c_symbol = token_symbol;
+    function init(uint256 token_supply, string token_name, string token_symbol) internal {
+        c_balances[msg.sender] = token_supply;
+        c_totalSupply = token_supply;
+        name = token_name;
+        symbol = token_symbol;
     }
 
     function() public {
         assert(false);
     }
 
-    function name() constant public returns (string) {
-        return c_name;
-    }
-
-    function symbol() constant public returns (string) {
-        return c_symbol;
-    }
-
-    function decimals() constant public returns (uint8) {
-        return c_decimals;
+    function setName(string _name) auth public {
+        name = _name;
     }
 
     function totalSupply() constant public returns (uint256) {
@@ -186,14 +177,13 @@ contract Coin is ERC20, DSStop {
         require(_value < c_totalSupply);
 
         c_approvals[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
     function allowance(address _owner, address _spender) constant public returns (uint256) {
         return c_approvals[_owner][_spender];
     }
-
 }
 
 contract FreezerAuthority is DSAuthority {
@@ -248,23 +238,18 @@ contract FreezerAuthority is DSAuthority {
 }
 
 contract LemoCoin is Coin, DSMath {
-    enum freezing_type_enum {
-        FUND_RAISING_FREEZING,
-        VIP_FREEZING
-    }
-
-    //freezing struct
+    // freezing struct
     struct FreezingNode {
         uint end_stamp;
         uint num_lemos;
-        freezing_type_enum freezing_type;
+        uint8 freezing_type;
     }
 
-    //freezing account list
-    mapping(address => FreezingNode []) internal c_freezing_list;
+    // freezing account list
+    mapping(address => FreezingNode[]) internal c_freezing_list;
 
-    function LemoCoin(uint256 total_lemos, string token_name, string token_symbol) public {
-        init(total_lemos, token_name, token_symbol);
+    constructor(uint256 token_supply, string token_name, string token_symbol) public {
+        init(token_supply, token_name, token_symbol);
         setAuthority(new FreezerAuthority());
     }
 
@@ -276,11 +261,11 @@ contract LemoCoin is Coin, DSMath {
         FreezerAuthority(authority).removeFreezer(freezer);
     }
 
-    event ClearExpiredFreezingEvent(address addr);
-    event SetFreezingEvent(address addr, uint end_stamp, uint num_lemos, freezing_type_enum freezing_type);
+    event ClearExpiredFreezingEvent(address indexed addr);
+    event SetFreezingEvent(address indexed addr, uint end_stamp, uint num_lemos, uint8 indexed freezing_type);
 
     function clearExpiredFreezing(address addr) public {
-        var nodes = c_freezing_list[addr];
+        FreezingNode[] storage nodes = c_freezing_list[addr];
         uint length = nodes.length;
 
         // find first expired index
@@ -305,12 +290,12 @@ contract LemoCoin is Coin, DSMath {
         }
         if (length != left) {
             nodes.length = left;
-            ClearExpiredFreezingEvent(addr);
+            emit ClearExpiredFreezingEvent(addr);
         }
     }
 
     function validBalanceOf(address addr) constant public returns (uint) {
-        var nodes = c_freezing_list[addr];
+        FreezingNode[] memory nodes = c_freezing_list[addr];
         uint length = nodes.length;
         uint total_lemos = balanceOf(addr);
 
@@ -339,19 +324,19 @@ contract LemoCoin is Coin, DSMath {
         uint valid_balance = validBalanceOf(addr);
         require(valid_balance >= num_lemos);
 
-        FreezingNode memory node = FreezingNode(end_stamp, num_lemos, freezing_type_enum(freezing_type));
+        FreezingNode memory node = FreezingNode(end_stamp, num_lemos, freezing_type);
         c_freezing_list[addr].push(node);
 
-        SetFreezingEvent(addr, end_stamp, num_lemos, freezing_type_enum(freezing_type));
+        emit SetFreezingEvent(addr, end_stamp, num_lemos, freezing_type);
     }
 
-    function transferAndFreezing(address _to, uint256 _value, uint256 freezeAmount, uint end_stamp, uint8 freezing_type) auth stoppable public returns (bool) {
+    function transferAndFreezing(address _to, uint256 _value, uint256 freeze_amount, uint end_stamp, uint8 freezing_type) auth stoppable public returns (bool) {
         // uint never less than 0. The negative number will become to a big positive number
         require(_value < c_totalSupply);
-        require(freezeAmount <= _value);
+        require(freeze_amount <= _value);
 
         transfer(_to, _value);
-        setFreezing(_to, end_stamp, freezeAmount, freezing_type);
+        setFreezing(_to, end_stamp, freeze_amount, freezing_type);
 
         return true;
     }
@@ -367,7 +352,7 @@ contract LemoCoin is Coin, DSMath {
         c_balances[msg.sender] = sub(c_balances[msg.sender], _value);
         c_balances[_to] = add(c_balances[_to], _value);
 
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -385,7 +370,7 @@ contract LemoCoin is Coin, DSMath {
         c_balances[_from] = sub(c_balances[_from], _value);
         c_balances[_to] = add(c_balances[_to], _value);
 
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 }

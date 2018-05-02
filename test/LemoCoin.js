@@ -30,6 +30,11 @@ contract('LemoCoin', function(accounts) {
         assert.equal(symbol, 'LEMO')
     })
 
+    it('decimals', async () => {
+        const decimals = await instance.decimals()
+        assert.equal(decimals, 18)
+    })
+
     it('owner', async () => {
         const ownerName = await instance.owner()
         assert.equal(ownerName, owner)
