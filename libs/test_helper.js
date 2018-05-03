@@ -62,14 +62,16 @@ async function transferETH(fromAccount, toAccount, finney) {
  * @param {number} finney amount
  * @param {string} exceptErrMsg should throw exception with this message
  * @param {string} msgIfNoError reject this error if haven't caught the exception we expected
+ * @param {string?} data contract params
  * @return {Promise}
  */
-async function transferETHAndCatch(fromAccount, toAccount, finney, exceptErrMsg, msgIfNoError) {
+async function transferETHAndCatch(fromAccount, toAccount, finney, exceptErrMsg, msgIfNoError, data) {
     return new Promise((resolve, reject) => {
         web3.eth.sendTransaction({
             from: fromAccount,
             to: toAccount,
             value: web3.toWei(finney, 'finney'),
+            data,
             gas: 150000
         }, (error, result) => {
             if (error && error.message.includes(exceptErrMsg)) {

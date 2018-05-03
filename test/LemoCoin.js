@@ -30,6 +30,11 @@ contract('LemoCoin', function(accounts) {
         assert.equal(symbol, 'LEMO')
     })
 
+    it('decimals', async () => {
+        const decimals = await instance.decimals()
+        assert.equal(decimals, 18)
+    })
+
     it('owner', async () => {
         const ownerName = await instance.owner()
         assert.equal(ownerName, owner)
@@ -65,10 +70,44 @@ contract('LemoCoin', function(accounts) {
         assert.equal(balance.toNumber(), 0)
     })
 
-    it('owner.addFreezer(freezer); owner.addFreezer(normalUser); owner.removeFreezer(normalUser)', async () => {
+    it('owner.setName("new name")', async () => {
+        await instance.setName('new name', {from: owner})
+        const name = await instance.name()
+        assert.equal(name, 'new name')
+    })
+
+    it('normalUser.setName("another name")', async () => {
+        const promise = instance.setName('another name', {from: normalUser})
+        await testHelper.assertReject(promise, 'Should reject setName cause no permission')
+    })
+
+    it('transfer(short address)', async () => {
+        // Test the short address bug. https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
+        // const data = await testHelper.encodeABIParams(instance, 'transfer', accounts[4], 1000)
+        const transferData = '0xa9059cbb0000000000000000000000000d1d4e623d10f9fba5db95830f7d3839406c6af00000000000000000000000000000000000000000000000000000000000003e8'
+
+        await testHelper.transferETHAndCatch(owner, instance.address, 0, testHelper.ASSERT_ERROR_MSG, 'Should reject transfer cause target address is invalid', transferData)
+    })
+
+    it('owner.addFreezer(freezer)', async () => {
         await instance.addFreezer(freezer, {from: owner})
+    })
+
+    it('owner.removeFreezer(normalUser) before add', async () => {
+        await instance.removeFreezer(normalUser, {from: owner})
+    })
+
+    it('owner.addFreezer(normalUser); owner.removeFreezer(normalUser)', async () => {
         await instance.addFreezer(normalUser, {from: owner})
         await instance.removeFreezer(normalUser, {from: owner})
+    })
+
+    it('normalUser.addFreezer(normalUser); normalUser.removeFreezer(freezer)', async () => {
+        let promise = instance.addFreezer(normalUser, {from: normalUser})
+        await testHelper.assertReject(promise, 'Should reject addFreezer cause no permission')
+
+        promise = instance.removeFreezer(freezer, {from: normalUser})
+        await testHelper.assertReject(promise, 'Should reject removeFreezer cause no permission')
     })
 
     it('owner.setFreezing(owner, future, 10, 0);freezingBalanceNumberOf(owner);freezingBalanceInfoOf(owner, i)', async () => {
