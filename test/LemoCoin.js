@@ -431,6 +431,10 @@ contract('LemoCoin', function(accounts) {
         await testHelper.assertReject(promise, 'Should reject start cause no permission')
     })
 
+    it('transferETH(contract address, 1 finney)', async () => {
+        await testHelper.transferETHAndCatch(normalUser, instance.address, 1, testHelper.DEFAULT_TRANSACTION_ERROR_MSG, 'Should reject transfer cause contract address is not payable')
+    })
+
     // TODO gas is not enough
 })
 
