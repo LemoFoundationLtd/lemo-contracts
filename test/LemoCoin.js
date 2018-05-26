@@ -236,7 +236,7 @@ contract('LemoCoin', function(accounts) {
         // The first balance in the queue will be unfreesed in 4 seconds
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, soonerExpireTime, freezingType)
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, expireTime, freezingType)
-        await testHelper.promiseTimeout(2 * 1000)
+        await testHelper.promiseTimeout(3 * 1000)
         await transfer(targetAccount, owner, 9)
         const promise = instance.transfer(owner, 11, {from: targetAccount})
         await testHelper.assertReject(promise, 'Should transfer cause token is freezing')
@@ -255,7 +255,7 @@ contract('LemoCoin', function(accounts) {
         // The last balance in the queue will be unfreesed in 4 seconds
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, expireTime, freezingType)
         await transferAndFreezing(owner, targetAccount, amount, freezeAmount, soonerExpireTime, freezingType)
-        await testHelper.promiseTimeout(2 * 1000)
+        await testHelper.promiseTimeout(3 * 1000)
         // Send whatever transaction to update block.stamp
         await transfer(owner, normalUser, 0)
 
@@ -300,6 +300,7 @@ contract('LemoCoin', function(accounts) {
         assert.equal(info[1].toNumber(), freezeAmount)
         assert.equal(info[2].toNumber(), freezingType)
 
+        await testHelper.promiseTimeout(1000)
         // Update freezing data
         await instance.clearExpiredFreezing(targetAccount)
 
