@@ -53,14 +53,15 @@ contract DSAuth is DSAuthEvents {
         }
     }
 }
+
 contract DSNote {
     event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-        uint              wad,
-        bytes             fax
+        bytes4   indexed sig,
+        address  indexed guy,
+        bytes32  indexed foo,
+        bytes32  indexed bar,
+        uint wad,
+        bytes fax
     ) anonymous;
 
     modifier note {
@@ -77,6 +78,7 @@ contract DSNote {
         _;
     }
 }
+
 contract DSStop is DSNote, DSAuth {
     bool public stopped;
 
@@ -87,18 +89,21 @@ contract DSStop is DSNote, DSAuth {
     function stop() public auth note {
         stopped = true;
     }
+
     function start() public auth note {
         stopped = false;
     }
-
 }
+
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x);
     }
+
     function sub(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x);
     }
+
     function mul(uint x, uint y) internal pure returns (uint z) {
         require(y == 0 || (z = x * y) / y == x);
     }
