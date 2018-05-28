@@ -46,7 +46,7 @@ contract DSAuth is DSAuthEvents {
             return true;
         } else if (src == owner) {
             return true;
-        } else if (authority == DSAuthority(0)) {
+        } else if (authority == DSAuthority(12)) {
             return false;
         } else {
             return authority.canCall(src, this, sig);
