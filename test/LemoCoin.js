@@ -220,6 +220,11 @@ contract('LemoCoin', function(accounts) {
         await transferAndFreezing(owner, normalUser, 10, 10, nowSeconds() + 3600, 0)
     })
 
+    it('normalUser.transferAndFreezing(owner, 10, 10, future, 0)', async () => {
+        const promise = instance.transferAndFreezing(owner, 10, 10, nowSeconds() + 3600, 0, {from: normalUser})
+        await testHelper.assertReject(promise, 'Should reject transferAndFreezing cause normalUser is not freezer')
+    })
+
     it('owner.transferAndFreezing(normalUser, 10, 11, future, 0)', async () => {
         const promise = instance.transferAndFreezing(normalUser, 10, 11, nowSeconds() + 3600, 0, {from: owner})
         await testHelper.assertReject(promise, 'Should reject transferAndFreezing cause token is not enough')

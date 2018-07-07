@@ -200,7 +200,7 @@ contract FreezerAuthority is DSAuthority {
 
     function canCall(address caller, address, bytes4 sig) public view returns (bool) {
         // freezer can call setFreezing, transferAndFreezing
-        if (isFreezer(caller) && sig == setFreezingSig || sig == transferAndFreezingSig) {
+        if (isFreezer(caller) && (sig == setFreezingSig || sig == transferAndFreezingSig)) {
             return true;
         } else {
             return false;
