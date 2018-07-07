@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity 0.4.23;
 
 contract DSAuthority {
     function canCall(
@@ -178,6 +178,8 @@ contract Coin is ERC20, DSStop {
     }
 
     function approve(address _spender, uint256 _value) public stoppable returns (bool) {
+        require(msg.data.length >= (2 * 32) + 4);
+        require(_value == 0 || c_approvals[msg.sender][_spender] == 0);
         // uint never less than 0. The negative number will become to a big positive number
         require(_value < c_totalSupply);
 
@@ -200,7 +202,7 @@ contract FreezerAuthority is DSAuthority {
 
     function canCall(address caller, address, bytes4 sig) public view returns (bool) {
         // freezer can call setFreezing, transferAndFreezing
-        if (isFreezer(caller) && sig == setFreezingSig || sig == transferAndFreezingSig) {
+        if (isFreezer(caller) && (sig == setFreezingSig || sig == transferAndFreezingSig)) {
             return true;
         } else {
             return false;
@@ -347,6 +349,7 @@ contract LemoCoin is Coin, DSMath {
     }
 
     function transfer(address _to, uint256 _value) stoppable public returns (bool) {
+        require(msg.data.length >= (2 * 32) + 4);
         // uint never less than 0. The negative number will become to a big positive number
         require(_value < c_totalSupply);
         clearExpiredFreezing(msg.sender);

@@ -220,6 +220,11 @@ contract('LemoCoin', function(accounts) {
         await transferAndFreezing(owner, normalUser, 10, 10, nowSeconds() + 3600, 0)
     })
 
+    it('normalUser.transferAndFreezing(owner, 10, 10, future, 0)', async () => {
+        const promise = instance.transferAndFreezing(owner, 10, 10, nowSeconds() + 3600, 0, {from: normalUser})
+        await testHelper.assertReject(promise, 'Should reject transferAndFreezing cause normalUser is not freezer')
+    })
+
     it('owner.transferAndFreezing(normalUser, 10, 11, future, 0)', async () => {
         const promise = instance.transferAndFreezing(normalUser, 10, 11, nowSeconds() + 3600, 0, {from: owner})
         await testHelper.assertReject(promise, 'Should reject transferAndFreezing cause token is not enough')
@@ -323,7 +328,23 @@ contract('LemoCoin', function(accounts) {
         assert.equal(allowance.toNumber(), 0)
     })
 
-    it('owner.approve(normalUser, 10)', async () => {
+    it('owner.approve(normalUser, 10);owner.approve(normalUser, 0)', async () => {
+        const fromAccount = owner
+        const toAccount = normalUser
+        const amount = 10
+        const amount2 = 0
+
+        await instance.approve(toAccount, amount, {from: fromAccount})
+        let allowance = await instance.allowance(fromAccount, toAccount)
+        assert.equal(allowance.toNumber(), amount)
+
+        // Approve to 0
+        await instance.approve(toAccount, amount2, {from: fromAccount})
+        allowance = await instance.allowance(fromAccount, toAccount)
+        assert.equal(allowance.toNumber(), amount2)
+    })
+
+    it('owner.approve(normalUser, 10);owner.approve(normalUser, 20)', async () => {
         const fromAccount = owner
         const toAccount = normalUser
         const amount = 10
@@ -333,10 +354,10 @@ contract('LemoCoin', function(accounts) {
         let allowance = await instance.allowance(fromAccount, toAccount)
         assert.equal(allowance.toNumber(), amount)
 
-        // Approve twice, the allowance will be covered
-        await instance.approve(toAccount, amount2, {from: fromAccount})
-        allowance = await instance.allowance(fromAccount, toAccount)
-        assert.equal(allowance.toNumber(), amount2)
+        const promise = instance.approve(toAccount, amount2, {from: fromAccount})
+        await testHelper.assertReject(promise, 'Should reject approve twice')
+
+        await instance.approve(toAccount, 0, {from: fromAccount})
     })
 
     it('owner.approve(owner, 10)', async () => {
@@ -347,6 +368,8 @@ contract('LemoCoin', function(accounts) {
         await instance.approve(toAccount, amount, {from: fromAccount})
         const allowance = await instance.allowance(fromAccount, toAccount)
         assert.equal(allowance.toNumber(), amount)
+
+        await instance.approve(toAccount, 0, {from: fromAccount})
     })
 
     it('owner.approve(normalUser, -1)', async () => {
@@ -363,6 +386,8 @@ contract('LemoCoin', function(accounts) {
 
         await instance.approve(normalUser, amount, {from: owner})
         await transferFrom(normalUser, owner, normalUser, amount)
+
+        await instance.approve(normalUser, 0, {from: owner})
     })
 
     it('normalUser.transferFrom(owner, normalUser, more than allowance)', async () => {
@@ -371,6 +396,8 @@ contract('LemoCoin', function(accounts) {
         await instance.approve(normalUser, amount, {from: owner})
         const promise = instance.transferFrom(owner, normalUser, amount + 1, {from: normalUser})
         await testHelper.assertReject(promise, 'Should reject transferFrom cause the amount is bigger than allowance')
+
+        await instance.approve(normalUser, 0, {from: owner})
     })
 
     it('normalUser.transferFrom(owner, normalUser, not enough)', async () => {
@@ -381,6 +408,8 @@ contract('LemoCoin', function(accounts) {
         await instance.approve(normalUser, amount, {from: owner})
         const promise = instance.transferFrom(owner, normalUser, amount, {from: normalUser})
         await testHelper.assertReject(promise, 'Should reject transferFrom cause the balance is not enough')
+
+        await instance.approve(normalUser, 0, {from: owner})
     })
 
     it('owner.transferFrom(accounts[5], owner, freezing)', async () => {
@@ -391,6 +420,8 @@ contract('LemoCoin', function(accounts) {
         await instance.approve(owner, amount, {from: targetAccount})
         const promise = instance.transferFrom(targetAccount, owner, amount, {from: owner})
         await testHelper.assertReject(promise, 'Should reject transferFrom cause the balance is freezing')
+
+        await instance.approve(owner, 0, {from: targetAccount})
     })
 
     it('owner.stop()', async () => {
@@ -401,7 +432,7 @@ contract('LemoCoin', function(accounts) {
         const stopped = await instance.stopped()
         assert.equal(stopped, true)
 
-        let promise = instance.approve(normalUser, 10, {from: owner})
+        let promise = instance.approve(normalUser, 0, {from: owner})
         await testHelper.assertReject(promise, 'Should reject approve after stop')
         promise = instance.setFreezing(owner, nowSeconds() + 3600, 10, 0, {from: owner})
         await testHelper.assertReject(promise, 'Should reject setFreezing after stop')
@@ -419,6 +450,7 @@ contract('LemoCoin', function(accounts) {
         assert.equal(stopped, false)
 
         // Sending transaction is enable now
+        await instance.approve(normalUser, 0, {from: owner})
         await instance.approve(normalUser, 1, {from: owner})
     })
 
