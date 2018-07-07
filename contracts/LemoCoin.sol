@@ -178,6 +178,7 @@ contract Coin is ERC20, DSStop {
     }
 
     function approve(address _spender, uint256 _value) public stoppable returns (bool) {
+        require(msg.data.length >= (2 * 32) + 4);
         require(_value == 0 || c_approvals[msg.sender][_spender] == 0);
         // uint never less than 0. The negative number will become to a big positive number
         require(_value < c_totalSupply);
@@ -348,6 +349,7 @@ contract LemoCoin is Coin, DSMath {
     }
 
     function transfer(address _to, uint256 _value) stoppable public returns (bool) {
+        require(msg.data.length >= (2 * 32) + 4);
         // uint never less than 0. The negative number will become to a big positive number
         require(_value < c_totalSupply);
         clearExpiredFreezing(msg.sender);
