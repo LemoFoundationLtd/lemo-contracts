@@ -9,7 +9,8 @@
     "scripts": {
         "dev": "truffle develop",
         "test": "truffle test",
-        "test-lemocoin": "truffle test ./test/LemoCoin.js"
+        "test-lemocoin": "truffle test ./test/LemoCoin.js",
+        "test-freezablecoin": "truffle test ./test/FreezableCoin.js"
     },
     "dependencies": {
         "ethjs-abi": "^0.2.1"
