@@ -11,6 +11,7 @@
         "test": "truffle test",
         "test-lemocoin": "truffle test ./test/LemoCoin.js",
         "test-freezablecoin": "truffle test ./test/FreezableCoin.js"
+        "test-standardcoin": "truffle test ./test/StandardCoin.js"
     },
     "dependencies": {
         "ethjs-abi": "^0.2.1"
